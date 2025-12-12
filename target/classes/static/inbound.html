@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>MA Inbound Automation Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Background (served from /warehouse.jpg) */
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        body::before {
+          content: "";
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: url("/warehouse.jpg");
+          background-size: cover;
+          background-position: center;
+          filter: brightness(0.3) blur(2px);
+          z-index: -1;
+        }
+
+        /* small helper to disable pointer-events when label is disabled */
+        .pointer-events-none { pointer-events: none; }
+
+        /* subtle transition for labels */
+        .step-label { transition: opacity 150ms ease, transform 150ms ease; }
+        .step-label:hover { transform: translateY(-3px); }
+
+        /* back button */
+        .back-btn { z-index: 90; }
+    </style>
+</head>
+
+<body class="text-slate-100 flex justify-center items-start min-h-screen py-10">
+
+<!-- Back button -->
+<a href="index.html"
+   class="back-btn fixed top-5 left-5 z-50 bg-slate-900/80 border border-slate-700 text-slate-200 px-4 py-2 rounded-full text-sm font-medium hover:bg-slate-800 hover:text-white transition shadow-lg backdrop-blur">
+    ← Back
+</a>
+
+<div class="w-full max-w-5xl bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl p-8 backdrop-blur-md">
+
+    <!-- HEADER -->
+    <div class="flex items-center justify-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-bold text-base">
+            MA
+        </div>
+        <div class="text-center">
+            <h1 class="text-2xl font-semibold text-slate-100 tracking-tight drop-shadow-md">Manhattan Active Inbound AI Automation Suite</h1>
+            <p class="text-sm text-slate-400">End-to-end inbound automation runner with Excel input control</p>
+        </div>
+    </div>
+
+    <!-- ENV + DATASET CONTROLS -->
+    <div class="flex flex-wrap justify-center items-center gap-4 mb-8">
+        <div class="text-center">
+            <label class="block text-xs text-slate-400 mb-1">Select Environment</label>
+            <select id="envSelect" class="bg-slate-950/70 border border-slate-800 rounded-full px-5 py-2 text-sm text-slate-200 focus:ring-emerald-500 focus:ring-1 w-40 text-center shadow-md">
+                <option value="DEV">DEV</option>
+                <option value="QA">QA</option>
+                <option value="PROD">PROD</option>
+            </select>
+        </div>
+        <div class="text-center">
+            <label class="block text-xs text-slate-400 mb-1">Select Dataset</label>
+            <select id="datasetSelect" class="bg-slate-950/70 border border-slate-800 rounded-full px-5 py-2 text-sm text-slate-200 focus:ring-emerald-500 focus:ring-1 w-44 text-center shadow-md">
+                <option value="default">Default</option>
+                <option value="smoke">Smoke</option>
+                <option value="regression">Regression</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Step Selection -->
+        <div>
+            <label class="block text-base font-semibold text-slate-200 mb-4 text-center">Select Steps to Run</label>
+
+            <!-- Option A placement: SELECT ALL toggles ABOVE steps -->
+            <div class="flex justify-center gap-6 mb-6">
+                <label class="flex items-center gap-2 bg-slate-950/70 border border-slate-800 rounded-full px-5 py-2 cursor-pointer hover:bg-slate-900/70 transition">
+                    <input type="checkbox" id="selectAllItemFlow" class="accent-emerald-500 w-4 h-4">
+                    <span class="text-slate-100 font-medium text-sm">Select All (Item Flow)</span>
+                </label>
+
+                <label class="flex items-center gap-2 bg-slate-950/70 border border-slate-800 rounded-full px-5 py-2 cursor-pointer hover:bg-slate-900/70 transition">
+                    <input type="checkbox" id="selectAllLpnFlow" class="accent-emerald-500 w-4 h-4">
+                    <span class="text-slate-100 font-medium text-sm">Select All (LPN Flow)</span>
+                </label>
+            </div>
+
+            <div id="stepGroup" class="grid sm:grid-cols-2 gap-4">
+
+                <!-- Step 1 -->
+                <label class="step-label group step-label cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step1">
+                    <input type="checkbox" value="step1" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Login</p>
+                </label>
+
+                <!-- Step 3 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step3">
+                    <input type="checkbox" value="step3" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Create ASN</p>
+                </label>
+
+                <!-- Step 4 (Item RCV) -->
+                <label id="itemRCVLabel" class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step4">
+                    <input type="checkbox" value="step4" id="itemRCV" class="step-checkbox either-or accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Item lvl MHE RCV</p>
+                </label>
+
+                <!-- Step 5 (LPN RCV) -->
+                <label id="lpnRCVLabel" class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step5">
+                    <input type="checkbox" value="step5" id="lpnRCV" class="step-checkbox either-or accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">LPN lvl MHE RCV</p>
+                </label>
+
+                <!-- Step 6 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step6">
+                    <input type="checkbox" value="step6" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Get Condition Code</p>
+                </label>
+
+                <!-- Step 7 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step7">
+                    <input type="checkbox" value="step7" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Box Delivered</p>
+                </label>
+
+                <!-- Step 8 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step8">
+                    <input type="checkbox" value="step8" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">Remove Condition Code</p>
+                </label>
+
+                <!-- Step 9 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step9">
+                    <input type="checkbox" value="step9" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">InductiLPN</p>
+                </label>
+
+                <!-- Step 10 -->
+                <label class="step-label group cursor-pointer flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-sm hover:bg-slate-900/80 transition" data-step="step10">
+                    <input type="checkbox" value="step10" class="step-checkbox accent-emerald-500 w-4 h-4">
+                    <p class="font-medium text-slate-100">MHE Toting</p>
+                </label>
+
+            </div>
+
+            <button id="runBtn"
+                    class="w-full mt-6 rounded-full border border-emerald-500/60 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500 hover:text-slate-900 transition disabled:opacity-50">
+                ▶ Run Selected Steps
+            </button>
+
+            <div id="statusText" class="text-center text-sm font-semibold mt-4"></div>
+        </div>
+
+        <!-- Excel Upload -->
+        <div>
+            <label class="block text-base font-semibold text-slate-200 mb-4 text-center">Upload Excel Data File</label>
+            <input type="file" id="excelFile" accept=".xlsx,.csv"
+                   class="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-emerald-500/20 file:text-emerald-300 file:font-semibold hover:file:bg-emerald-500 hover:file:text-slate-900 transition" />
+
+            <div id="excelPreview" class="bg-slate-950/70 border border-slate-800 rounded-xl mt-4 p-3 h-60 overflow-auto text-xs text-slate-300">
+                Upload an Excel file to preview data...
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="mt-10 bg-slate-950/80 border border-slate-800 rounded-xl p-4 h-56 overflow-auto font-mono text-xs text-slate-300" id="log">
+        Logs will appear here...
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 text-center text-[11px] text-slate-500 mt-6 pt-3">
+        © 2025 MA MSG Suite | Built with Tailwind + Spring Boot
+    </footer>
+
+</div>
+
+<script>
+    // -------------------------
+    // Event-lock (re-entrancy guard)
+    // -------------------------
+    let isSyncing = false;
+
+    // DOM helpers
+    const runBtn = document.getElementById('runBtn');
+    const log = document.getElementById('log');
+    const statusText = document.getElementById('statusText');
+    const excelInput = document.getElementById('excelFile');
+    const excelPreview = document.getElementById('excelPreview');
+    const envSelect = document.getElementById('envSelect');
+    const datasetSelect = document.getElementById('datasetSelect');
+
+    const selectItemFlow = document.getElementById("selectAllItemFlow");
+    const selectLpnFlow = document.getElementById("selectAllLpnFlow");
+
+    const itemRCV = document.getElementById("itemRCV");
+    const lpnRCV = document.getElementById("lpnRCV");
+    const itemRCVLabel = document.getElementById("itemRCVLabel");
+    const lpnRCVLabel = document.getElementById("lpnRCVLabel");
+
+    const allStepCheckboxes = Array.from(document.querySelectorAll(".step-checkbox"));
+
+    // Flow definitions
+    const itemFlowValues = ["step1","step3","step4","step6","step7","step8","step9","step10"];
+    const lpnFlowValues  = ["step1","step3","step5","step6","step7","step8","step9","step10"];
+
+    // utilities
+    function getCheckboxByValue(val) {
+      return document.querySelector(`#stepGroup input[type="checkbox"][value="${val}"]`);
+    }
+
+    function setLabelDisabled(labelEl, disabled) {
+      if (!labelEl) return;
+      if (disabled) {
+        labelEl.classList.add("opacity-40", "pointer-events-none");
+      } else {
+        labelEl.classList.remove("opacity-40", "pointer-events-none");
+      }
+    }
+
+    function setFlowSelection(values, checked) {
+      values.forEach(v => {
+        const cb = getCheckboxByValue(v);
+        if (cb) {
+          cb.checked = !!checked;
+        }
+      });
+    }
+
+    // updateFlowBoxes uses isSyncing to avoid re-entrant events
+    function updateFlowBoxes() {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        const itemAll = itemFlowValues.every(v => {
+          const cb = getCheckboxByValue(v);
+          return cb ? cb.checked : false;
+        });
+        const lpnAll = lpnFlowValues.every(v => {
+          const cb = getCheckboxByValue(v);
+          return cb ? cb.checked : false;
+        });
+
+        // If itemRCV is disabled because LPN chosen, itemAll should be false
+        const itemRcvCheckbox = getCheckboxByValue("step4");
+        const lpnRcvCheckbox  = getCheckboxByValue("step5");
+
+        const effectiveItemAll = itemAll && !(itemRcvCheckbox && itemRcvCheckbox.disabled && !itemRcvCheckbox.checked);
+        const effectiveLpnAll  = lpnAll  && !(lpnRcvCheckbox  && lpnRcvCheckbox.disabled  && !lpnRcvCheckbox.checked);
+
+        // programmatically set select boxes without triggering logic (guarded by isSyncing)
+        selectItemFlow.checked = !!effectiveItemAll;
+        selectLpnFlow.checked  = !!effectiveLpnAll;
+      } finally {
+        isSyncing = false;
+      }
+    }
+
+    // ------------------ Either-Or logic for manual toggles (guarded) ------------------
+    itemRCV.addEventListener("change", () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        if (itemRCV.checked) {
+          lpnRCV.checked = false;
+          lpnRCV.disabled = true;
+          setLabelDisabled(lpnRCVLabel, true);
+        } else {
+          lpnRCV.disabled = false;
+          setLabelDisabled(lpnRCVLabel, false);
+        }
+        updateFlowBoxes();
+      } finally {
+        isSyncing = false;
+      }
+    });
+
+    lpnRCV.addEventListener("change", () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        if (lpnRCV.checked) {
+          itemRCV.checked = false;
+          itemRCV.disabled = true;
+          setLabelDisabled(itemRCVLabel, true);
+        } else {
+          itemRCV.disabled = false;
+          setLabelDisabled(itemRCVLabel, false);
+        }
+        updateFlowBoxes();
+      } finally {
+        isSyncing = false;
+      }
+    });
+
+    // ------------------ Select-All Handlers (atomic, guarded) ------------------
+    selectItemFlow.addEventListener("change", () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        if (selectItemFlow.checked) {
+          // atomically turn off other select-all and apply item flow
+          selectLpnFlow.checked = false;
+          selectLpnFlow.disabled = true;
+
+          // select all item steps
+          setFlowSelection(itemFlowValues, true);
+
+          // disable LPN-only step (either-or)
+          lpnRCV.checked = false;
+          lpnRCV.disabled = true;
+          setLabelDisabled(lpnRCVLabel, true);
+
+        } else {
+          // deselect item steps and restore LPN
+          setFlowSelection(itemFlowValues, false);
+
+          lpnRCV.disabled = false;
+          setLabelDisabled(lpnRCVLabel, false);
+
+          selectLpnFlow.disabled = false;
+        }
+        updateFlowBoxes();
+      } finally {
+        isSyncing = false;
+      }
+    });
+
+    selectLpnFlow.addEventListener("change", () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        if (selectLpnFlow.checked) {
+          selectItemFlow.checked = false;
+          selectItemFlow.disabled = true;
+
+          setFlowSelection(lpnFlowValues, true);
+
+          itemRCV.checked = false;
+          itemRCV.disabled = true;
+          setLabelDisabled(itemRCVLabel, true);
+
+        } else {
+          setFlowSelection(lpnFlowValues, false);
+
+          itemRCV.disabled = false;
+          setLabelDisabled(itemRCVLabel, false);
+
+          selectItemFlow.disabled = false;
+        }
+        updateFlowBoxes();
+      } finally {
+        isSyncing = false;
+      }
+    });
+
+    // ------------------ Keep select-all boxes in sync when any individual checkbox toggles ------------------
+    allStepCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (isSyncing) return;
+        isSyncing = true;
+        try {
+          // If manual check of either-or member, enforce exclusivity
+          if (cb === itemRCV && itemRCV.checked) {
+            lpnRCV.checked = false;
+            lpnRCV.disabled = true;
+            setLabelDisabled(lpnRCVLabel, true);
+          }
+          if (cb === lpnRCV && lpnRCV.checked) {
+            itemRCV.checked = false;
+            itemRCV.disabled = true;
+            setLabelDisabled(itemRCVLabel, true);
+          }
+          updateFlowBoxes();
+        } finally {
+          isSyncing = false;
+        }
+      });
+    });
+
+    // Initial sync
+    updateFlowBoxes();
+
+    // --- Excel Upload + Preview ---
+    excelInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const data = evt.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        let html = "<table class='min-w-full text-xs border-collapse'>";
+        json.slice(0, 10).forEach((row) => {
+          html += "<tr>" + row.map(cell => `<td class='border border-slate-700 px-2 py-1'>${cell || ''}</td>`).join('') + "</tr>";
+        });
+        html += "</table>";
+        excelPreview.innerHTML = html;
+      };
+      reader.readAsBinaryString(file);
+    });
+
+    // --- Run Button Logic ---
+    runBtn.addEventListener('click', async () => {
+      const selectedSteps = Array.from(document.querySelectorAll("#stepGroup input[type=checkbox]"))
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      if (selectedSteps.length === 0) {
+        alert("Please select at least one step to run!");
+        return;
+      }
+
+      const env = envSelect.value;
+      const dataset = datasetSelect.value;
+
+      log.textContent = `Environment: ${env}\nDataset: ${dataset}\nSteps: ${selectedSteps.join(', ')}\n\n`;
+      statusText.textContent = 'Starting job...';
+      statusText.className = 'text-center text-slate-300 font-semibold';
+      runBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ steps: selectedSteps, env, dataset })
+        });
+
+        const data = await res.json();
+        const jobId = data.jobId;
+        statusText.textContent = 'Job started: ' + jobId;
+
+        const poll = setInterval(async () => {
+          const r = await fetch('/api/status/' + jobId);
+          const job = await r.json();
+
+          log.textContent += `Status: ${job.status}\n`;
+
+          if (job.status.startsWith('finished')) {
+            clearInterval(poll);
+            statusText.textContent = '✅ Finished successfully';
+            runBtn.disabled = false;
+          } else if (job.status.startsWith('failed')) {
+            clearInterval(poll);
+            statusText.textContent = '❌ Failed: ' + job.status;
+            runBtn.disabled = false;
+          }
+        }, 2000);
+      } catch (err) {
+        statusText.textContent = '❌ Error: ' + err;
+        runBtn.disabled = false;
+      }
+    });
+
+</script>
+</body>
+</html>
