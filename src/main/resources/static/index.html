@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Automation Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        html, body { height: 100%; }
+
+        body {
+            background: radial-gradient(1200px 600px at top right, #1e3a8a, transparent),
+                        radial-gradient(1000px 500px at bottom left, #065f46, transparent),
+                        linear-gradient(180deg, #020617, #020617);
+            color: #e5e7eb;
+        }
+
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .mode-card {
+            transition: transform .35s ease, box-shadow .35s ease;
+        }
+        .mode-card:hover { transform: translateY(-12px) scale(1.04); }
+
+        .glow-green:hover { box-shadow: 0 25px 60px rgba(16,185,129,.35); }
+        .glow-blue:hover  { box-shadow: 0 25px 60px rgba(59,130,246,.35); }
+
+        .loader {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,.15);
+            border-top-color: #22c55e;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="flex items-center justify-center">
+
+<main class="relative w-full max-w-5xl px-6">
+
+    <!-- HEADER -->
+    <header class="text-center mb-14">
+        <h1 class="text-4xl font-semibold mb-3">Automation Control Center</h1>
+        <p class="text-slate-300 max-w-xl mx-auto">
+            Choose how you want to run Manhattan Active warehouse automation workflows
+        </p>
+    </header>
+
+    <!-- CARDS -->
+    <section class="grid md:grid-cols-2 gap-10">
+
+        <!-- INBOUND -->
+        <div onclick="selectInbound()"
+             class="mode-card glow-green cursor-pointer rounded-3xl p-10 bg-emerald-500/10 border border-emerald-400/20 float text-center flex flex-col items-center">
+
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                <i data-lucide="warehouse" class="w-8 h-8 text-emerald-300"></i>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-emerald-200 mb-1">Inbound</h2>
+            <p class="text-slate-300 mb-4">Receiving & dock operations</p>
+
+            <ul class="space-y-2 text-slate-300 text-sm mb-8">
+                <li>• ASN creation & validation</li>
+                <li>• Dock door & yard processing</li>
+                <li>• MHE & message integration</li>
+                <li>• Inventory receipt & putaway</li>
+            </ul>
+
+            <button class="px-8 py-3 rounded-xl bg-emerald-500 text-emerald-950 font-medium">
+                Start Inbound Automation
+            </button>
+        </div>
+
+
+        <!-- OUTBOUND -->
+        <div onclick="selectOutbound()"
+             class="mode-card glow-blue cursor-pointer rounded-3xl p-10 bg-blue-500/10 border border-blue-400/20 float text-center flex flex-col items-center"
+             style="animation-delay:1s">
+
+            <div class="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mb-4">
+                <i data-lucide="truck" class="w-8 h-8 text-blue-300"></i>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-blue-200 mb-1">Outbound</h2>
+            <p class="text-slate-300 mb-4">Shipping & fulfillment</p>
+
+            <ul class="space-y-2 text-slate-300 text-sm mb-8">
+                <li>• Order allocation & waving</li>
+                <li>• Picking, packing & staging</li>
+                <li>• Carrier & shipment creation</li>
+                <li>• Load confirmation & dispatch</li>
+            </ul>
+
+            <button class="px-8 py-3 rounded-xl bg-blue-500 text-blue-950 font-medium">
+                Start Outbound Automation
+            </button>
+        </div>
+
+
+    </section>
+
+    <!-- README BUTTON -->
+    <button id="readmeBtn"
+            class="fixed left-6 bottom-6 z-40 px-4 py-3 rounded-xl bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium hover:bg-white/20 transition flex items-center gap-2">
+        <i data-lucide="book-open" class="w-4 h-4"></i>
+        README
+    </button>
+
+    <!-- README MODAL -->
+    <div id="readmeModal"
+         class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+        <div class="w-full max-w-lg rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
+            <div class="flex justify-between mb-4">
+                <h3 class="text-lg font-semibold">README</h3>
+                <button onclick="toggleReadme()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <!-- README CONTENT FROM FILE -->
+            <pre id="readmeContent"
+                 class="text-sm text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto">
+Loading README...
+            </pre>
+        </div>
+    </div>
+
+    <!-- FOOTER WITH HOVER NAMES -->
+    <footer class="mt-16 text-center text-sm text-slate-400 relative group">
+        <span class="cursor-pointer">Developed by Developers</span>
+
+        <div class="absolute left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition">
+            <div class="px-4 py-2 rounded-lg bg-slate-800 border border-white/10 text-slate-200 shadow-lg">
+                Aditya Mishra<br/>
+                Vaibhav Bagade
+            </div>
+        </div>
+    </footer>
+
+</main>
+
+<!-- LOADING SCREEN -->
+<div id="loading"
+     class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="loader"></div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function showLoader() {
+        document.getElementById('loading').classList.remove('hidden');
+    }
+    function selectInbound() {
+        showLoader();
+        setTimeout(() => location.href = 'inbound.html', 1200);
+    }
+    function selectOutbound() {
+        showLoader();
+        setTimeout(() => location.href = 'outbound.html', 1200);
+    }
+
+async function loadReadme() {
+  try {
+    const res = await fetch('README.txt?ts=' + Date.now(), { cache: 'no-store' });
+    document.getElementById('readmeContent').textContent = await res.text();
+  } catch {
+    document.getElementById('readmeContent').textContent = 'README not found.';
+  }
+}
+
+    function toggleReadme() {
+    const modal = document.getElementById('readmeModal');
+    modal.classList.toggle('hidden');
+
+    // Always reload README when opening
+    if (!modal.classList.contains('hidden')) {
+        loadReadme();
+    }
+}
+
+
+    document.getElementById('readmeBtn').addEventListener('click', toggleReadme);
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.getElementById('readmeModal').classList.add('hidden');
+        }
+    });
+</script>
+
+</body>
+</html>
