@@ -55,6 +55,9 @@ public class Manual_LPN_rcv {
                     ExpectedConditions.presenceOfElementLocated(
                             By.xpath("//input[@placeholder='Search Menu...']"))
             );
+            searchBox.click();
+            searchBox.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+            searchBox.sendKeys(Keys.BACK_SPACE);
             searchBox.sendKeys("WM Mobile");
 
             WebElement WM_Mobile = wait.until(
@@ -348,3 +351,4 @@ public class Manual_LPN_rcv {
 
 
 }
+
