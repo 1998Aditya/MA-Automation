@@ -88,7 +88,10 @@ public class ItemlvlValidation {
             );
             searchBox.sendKeys("ASNs");
 
-            WebElement asnsButton = wait.until(ExpectedConditions.elementToBeClickable(By.id("ASN")));
+           WebElement asnsButton = wait.until(
+                    ExpectedConditions.presenceOfElementLocated(
+                            By.xpath("//button[@data-component-id='ASNs']"))
+            );
             asnsButton.click();
 
             Thread.sleep(5000);
@@ -266,3 +269,4 @@ public class ItemlvlValidation {
         return cell == null ? "" : new DataFormatter().formatCellValue(cell).trim();
     }
 }
+
