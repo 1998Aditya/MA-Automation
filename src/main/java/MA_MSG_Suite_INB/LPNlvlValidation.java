@@ -87,6 +87,10 @@ public class LPNlvlValidation {
                     ExpectedConditions.presenceOfElementLocated(
                             By.xpath("//input[@placeholder='Search Menu...']"))
             );
+            searchBox.click();
+            searchBox.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+            searchBox.sendKeys(Keys.BACK_SPACE);
+            searchBox.click();
             searchBox.sendKeys("ASNs");
 
             WebElement asnsButton = wait.until(
@@ -261,4 +265,5 @@ public class LPNlvlValidation {
         return cell == null ? "" : new DataFormatter().formatCellValue(cell).trim();
     }
 }
+
 
