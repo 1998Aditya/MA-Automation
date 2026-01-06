@@ -106,8 +106,14 @@ public class Checkin {
                 wait.until(ExpectedConditions.elementToBeClickable(
                         By.cssSelector("ion-button[data-component-id='menu-toggle-button']"))).click();
 
-                wait.until(ExpectedConditions.presenceOfElementLocated(
-                        By.xpath("//input[@placeholder='Search Menu...']"))).sendKeys("Check In");
+                WebElement searchBox = wait.until(ExpectedConditions.presenceOfElementLocated(
+                        By.xpath("//input[@placeholder='Search Menu...']")));
+ 
+                searchBox.click();
+                searchBox.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+                searchBox.sendKeys(Keys.BACK_SPACE);
+                searchBox.click();
+                searchBox.sendKeys("Check In");
 
                 wait.until(ExpectedConditions.elementToBeClickable(
                         By.xpath("//button[@data-component-id='CheckIn']"))).click();
@@ -227,3 +233,4 @@ public class Checkin {
         }
     }
 }
+
